@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratório de APIs</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1d2430; --txt:#e6edf3; --muted:#8b98a9;
+  --acc:#2dd4bf; --acc2:#818cf8; --ok:#3fb950; --err:#f85149; --warn:#d29922; --border:#2b3442;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.55}
+a{color:var(--acc)}
+code{font-family:var(--mono);background:#0a0e14;border:1px solid var(--border);padding:1px 6px;border-radius:6px;font-size:.9em}
+.topo{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(120deg,#10222b,#0d1117 65%);border-bottom:1px solid var(--border)}
+.marca{display:flex;gap:12px;align-items:center}
+.logo{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));font-weight:800;font-family:var(--mono);color:#06121a}
+.marca h1{margin:0;font-size:1.2rem}
+.marca p{margin:0;color:var(--muted);font-size:.85rem}
+.status{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--panel2);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:.85rem;white-space:nowrap}
+.chip.acc{background:linear-gradient(135deg,var(--acc),#5eead4);color:#06231f;font-weight:700;border:0}
+.abas{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.abas button{background:transparent;color:var(--muted);border:1px solid transparent;border-radius:10px;padding:8px 14px;font-size:.95rem;cursor:pointer;white-space:nowrap}
+.abas button:hover{color:var(--txt)}
+.abas button.ativa{background:var(--panel2);color:var(--txt);border-color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:16px}
+.painel h2{margin:.2rem 0 .6rem}
+.box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.box h3{margin:.1rem 0 .5rem}
+.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+label{display:block;margin:10px 0 4px;font-weight:600}
+input[type=text],input[type=number]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0a0e14;color:var(--txt);font-size:1rem}
+button.btn{background:linear-gradient(135deg,var(--acc),#5eead4);color:#06231f;border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:.95rem}
+button.btn:hover{filter:brightness(1.08)}
+button.btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--border);font-weight:600}
+button.btn.perigo{background:#3a1620;color:#ffb4b4;border:1px solid #6b2433}
+button.btn:disabled{opacity:.6;cursor:wait}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;margin:10px 0;overflow:hidden}
+.card.ok{border-color:var(--ok)}
+.card summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:center;padding:12px 14px;font-weight:700}
+.card summary::-webkit-details-marker{display:none}
+.card summary .tit{flex:1}
+.badge{font-size:.72rem;padding:2px 9px;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-weight:600}
+.badge.facil{color:#86efac;border-color:#1f5f3a}
+.badge.medio{color:#fcd34d;border-color:#6b5316}
+.badge.desafio{color:#c4b5fd;border-color:#4c3f8f}
+.pts{color:var(--acc);font-weight:800;font-size:.9rem}
+.marca-ok{display:none;color:var(--ok);font-weight:800}
+.card.ok .marca-ok{display:inline}
+.corpo{padding:0 14px 14px}
+textarea.code{width:100%;min-height:230px;resize:vertical;background:#0a0e14;color:#e6edf3;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:var(--mono);font-size:.9rem;line-height:1.5;tab-size:4;white-space:pre;overflow:auto}
+.linha{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.msg{border-radius:10px;padding:10px 12px;margin:8px 0;border:1px solid}
+.msg.ok{background:#0e2616;border-color:#1f5f3a;color:#bbf7d0}
+.msg.err{background:#2a1215;border-color:#6b2433;color:#fecaca}
+.msg.info{background:#121b2b;border-color:var(--border);color:var(--muted)}
+.msg.warn{background:#2a2110;border-color:#6b5316;color:#fde68a}
+pre{margin:2px 0;background:#0a0e14;border:1px solid var(--border);border-radius:8px;padding:8px 10px;overflow:auto;font-family:var(--mono);font-size:.86rem;white-space:pre-wrap;word-break:break-word}
+.dica{background:#101a30;border:1px dashed var(--acc2);border-radius:10px;padding:8px 12px;margin:8px 0}
+.rot{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.check{display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+.check .i{width:22px;flex:none}
+.check .det{color:#fca5a5;font-size:.88rem;margin-top:2px;white-space:pre-wrap;word-break:break-word}
+table.t{border-collapse:collapse;width:100%;font-size:.88rem;background:#0a0e14;border-radius:8px;overflow:hidden}
+table.t th,table.t td{border:1px solid var(--border);padding:6px 9px;text-align:left}
+table.t th{background:var(--panel2)}
+.tw{overflow:auto;max-height:420px;margin:6px 0}
+ol.passos li{margin:6px 0}
+.prog{color:var(--muted);font-size:.9rem;margin:0 0 6px}
+.perg{border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin:10px 0;background:#10161e}
+.perg.certa{border-color:var(--ok)}
+.perg.errada{border-color:var(--err)}
+.perg .q{font-weight:700;margin-bottom:6px}
+.perg label{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px 0;cursor:pointer}
+.perg .exp{margin-top:6px;font-size:.9rem;color:var(--muted)}
+footer{max-width:980px;margin:10px auto 30px;padding:0 16px;color:var(--muted);font-size:.82rem}
+textarea.out{width:100%;min-height:110px;background:#0a0e14;color:var(--txt);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:var(--mono);font-size:.82rem}
+@media (max-width:560px){ .marca h1{font-size:1rem} }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="marca">
+    <div class="logo">API</div>
+    <div><h1 id="titulo"></h1><p id="subtitulo"></p></div>
+  </div>
+  <div class="status">
+    <div class="chip" id="chipAluno">Aluno: —</div>
+    <div class="chip" id="chipMissoes">0 missões</div>
+    <div class="chip acc" id="chipPontos">0 pts</div>
+  </div>
+</header>
+<nav class="abas" id="abas"></nav>
+<main id="conteudo"></main>
+<footer>Atividade de prática individual. Não é uma competição: o objetivo é treinar e tirar dúvidas.</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================  CONFIGURAÇÃO (edite aqui)  ===================== */
+var CONFIG = {
+  titulo: "Laboratório de APIs",
+  subtitulo: "Prática individual de FastAPI, Pydantic, HTTP e SQLAlchemy",
+  versao: "v1",
+  metaProfessor: 200                 // pontos que equivalem à nota 100 (ajustável no painel do professor)
+};
+var PYODIDE_BASES = [
+  "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
+  "https://fastly.jsdelivr.net/pyodide/v0.26.4/full/"
+];
+var LIBS_LOCAIS = [
+  "fastapi-0.115.6-py3-none-any.whl",
+  "starlette-0.41.3-py3-none-any.whl",
+  "anyio-4.6.2.post1-py3-none-any.whl",
+  "sniffio-1.3.1-py3-none-any.whl"
+];
+var LIBS_PYPI = ["fastapi==0.115.6", "starlette==0.41.3", "anyio", "sniffio"];
+var SAL = "lab-api-2026";
+var STORE_KEY = "lab-api-" + CONFIG.versao;
+var DATA = {"harness": "import sys, io, os, json, glob, types, asyncio, traceback\nfrom pydantic import BaseModel, ValidationError\n\n# Módulo \"uvicorn\" de mentira: os alunos costumam importar, mas aqui a página chama as rotas.\n_u = types.ModuleType(\"uvicorn\")\n_u.run = lambda *a, **k: None\nsys.modules.setdefault(\"uvicorn\", _u)\n\n_FASTAPI_OK = False\n_SEM = object()\n\n\ndef _preparar_fastapi():\n    \"\"\"No navegador não existem threads: faz as rotas 'def' rodarem direto, sem threadpool.\"\"\"\n    global _FASTAPI_OK\n    if _FASTAPI_OK:\n        return\n    import anyio.to_thread\n\n    async def _run_sync(func, *args, abandon_on_cancel=False, cancellable=None, limiter=None):\n        return func(*args)\n\n    anyio.to_thread.run_sync = _run_sync\n    _FASTAPI_OK = True\n\n\nasync def _instalar_fastapi(urls_json, pypi_json):\n    import micropip\n    urls = json.loads(urls_json)\n    pypi = json.loads(pypi_json)\n    try:\n        await micropip.install(urls, deps=False)\n    except Exception:\n        await micropip.install(pypi)\n    _preparar_fastapi()\n\n\ndef _fechar_sessoes():\n    try:\n        from sqlalchemy.orm import close_all_sessions\n        close_all_sessions()\n    except Exception:\n        pass\n\n\ndef _limpar_bancos():\n    for f in glob.glob(\"*.db\") + glob.glob(\"*.db-journal\"):\n        try:\n            os.remove(f)\n        except Exception:\n            pass\n\n\ndef _carregar(codigo):\n    mod = types.ModuleType(\"student\")\n    sys.modules[\"student\"] = mod\n    buf = io.StringIO()\n    antigo = sys.stdout\n    sys.stdout = buf\n    erro = None\n    linha = None\n    try:\n        exec(compile(codigo, \"<seu_codigo>\", \"exec\"), mod.__dict__)\n    except SyntaxError as e:\n        erro = type(e).__name__ + \": \" + str(e.msg)\n        linha = e.lineno\n    except BaseException as e:\n        erro = type(e).__name__ + \": \" + str(e)[:400]\n        for fr in traceback.extract_tb(e.__traceback__):\n            if fr.filename == \"<seu_codigo>\":\n                linha = fr.lineno\n    finally:\n        sys.stdout = antigo\n    _fechar_sessoes()\n    return mod, buf.getvalue(), erro, linha\n\n\ndef chk(desc, fn):\n    try:\n        r = fn()\n        if isinstance(r, tuple):\n            ok, det = bool(r[0]), str(r[1])\n        else:\n            ok, det = bool(r), \"\"\n    except BaseException as e:\n        ok, det = False, \"Erro ao executar: \" + type(e).__name__ + \": \" + str(e)[:300]\n        if \"database is locked\" in str(e):\n            det += \" (alguma sessão ficou aberta sem commit/close)\"\n    _fechar_sessoes()\n    return (desc, ok, det)\n\n\ndef invalido(fn):\n    try:\n        fn()\n    except ValidationError:\n        return True\n    except Exception:\n        return False\n    return False\n\n\ndef esperar(desc, r, status=None, corpo=_SEM, vazio=False, tem=(), sem=()):\n    problemas = []\n    if r.get(\"erro\"):\n        problemas.append(\"a rota gerou um erro interno: \" + r[\"erro\"])\n    if status is not None and r[\"status\"] != status:\n        problemas.append(\"status esperado \" + str(status) + \", obtido \" + str(r[\"status\"]))\n    if corpo is not _SEM and r[\"json\"] != corpo:\n        problemas.append(\"corpo esperado \" + json.dumps(corpo, ensure_ascii=False) + \", obtido \" + (r[\"text\"][:240] or \"(vazio)\"))\n    if vazio and r[\"text\"] != \"\":\n        problemas.append(\"a resposta deveria vir sem corpo, mas veio: \" + r[\"text\"][:120])\n    for k in tem:\n        if not (isinstance(r[\"json\"], dict) and k in r[\"json\"]):\n            problemas.append(\"faltou a chave '\" + k + \"' na resposta\")\n    for k in sem:\n        if isinstance(r[\"json\"], dict) and k in r[\"json\"]:\n            problemas.append(\"a chave '\" + k + \"' não deveria aparecer na resposta\")\n    return (desc, not problemas, \"; \".join(problemas))\n\n\ndef _fazer_req(mod):\n    async def req(metodo, caminho, corpo=None, query=\"\"):\n        app = getattr(mod, \"app\", None)\n        raw = json.dumps(corpo).encode() if corpo is not None else b\"\"\n        hdr = [(b\"host\", b\"testserver\"), (b\"accept\", b\"application/json\")]\n        if corpo is not None:\n            hdr += [(b\"content-type\", b\"application/json\"), (b\"content-length\", str(len(raw)).encode())]\n        scope = {\"type\": \"http\", \"asgi\": {\"version\": \"3.0\"}, \"http_version\": \"1.1\", \"method\": metodo,\n                 \"path\": caminho, \"raw_path\": caminho.encode(), \"query_string\": query.encode(),\n                 \"headers\": hdr, \"server\": (\"testserver\", 80), \"client\": (\"cliente\", 1234),\n                 \"scheme\": \"http\", \"root_path\": \"\"}\n        estado = {\"feito\": False}\n\n        async def receive():\n            if not estado[\"feito\"]:\n                estado[\"feito\"] = True\n                return {\"type\": \"http.request\", \"body\": raw, \"more_body\": False}\n            return {\"type\": \"http.disconnect\"}\n\n        saida = {\"status\": None, \"body\": b\"\"}\n        erro = None\n\n        async def send(m):\n            if m[\"type\"] == \"http.response.start\":\n                saida[\"status\"] = m[\"status\"]\n            elif m[\"type\"] == \"http.response.body\":\n                saida[\"body\"] += m.get(\"body\", b\"\")\n\n        try:\n            await app(scope, receive, send)\n        except Exception as e:\n            erro = type(e).__name__ + \": \" + str(e)[:200]\n        _fechar_sessoes()\n        texto = saida[\"body\"].decode(\"utf-8\", \"replace\")\n        try:\n            dados = json.loads(texto) if texto else None\n        except Exception:\n            dados = None\n        return {\"status\": saida[\"status\"] if saida[\"status\"] is not None else 500,\n                \"json\": dados, \"text\": texto, \"erro\": erro}\n    return req\n\n\nasync def _rodar(codigo, teste_src, usa_app):\n    _limpar_bancos()\n    mod, saida, erro, linha = _carregar(codigo)\n    if erro:\n        return json.dumps({\"fase\": \"codigo\", \"erro\": erro, \"linha\": linha, \"saida\": saida})\n    if usa_app:\n        from fastapi import FastAPI\n        if not isinstance(getattr(mod, \"app\", None), FastAPI):\n            return json.dumps({\"fase\": \"codigo\", \"erro\": \"Não encontrei a variável app = FastAPI() no seu código.\",\n                               \"linha\": None, \"saida\": saida})\n    ns = {\"M\": mod, \"chk\": chk, \"invalido\": invalido, \"esperar\": esperar, \"req\": _fazer_req(mod),\n          \"BaseModel\": BaseModel, \"ValidationError\": ValidationError, \"json\": json}\n    try:\n        exec(compile(teste_src, \"<teste>\", \"exec\"), ns)\n        res = ns[\"verificar\"]()\n        if asyncio.iscoroutine(res):\n            res = await res\n        out = [[str(d), bool(ok), str(det)] for d, ok, det in res]\n    except BaseException as e:\n        out = [[\"Não consegui concluir a verificação\", False, type(e).__name__ + \": \" + str(e)[:300]]]\n    _fechar_sessoes()\n    return json.dumps({\"fase\": \"testes\", \"resultados\": out, \"saida\": saida})\n", "trilhas": [{"id": "conceitos", "icone": "📘", "nome": "Conceitos", "aviso": "Perguntas rápidas sobre métodos HTTP e códigos de status. Sem limite de tentativas: errar aqui é só uma chance de revisar."}, {"id": "pydantic", "icone": "🧩", "nome": "Pydantic", "aviso": "Use o <b>Pydantic v2<\/b> (<code>from pydantic import BaseModel, Field...<\/code>). Cada verificação executa o seu código do zero."}, {"id": "rotas", "icone": "🛣️", "nome": "Rotas com FastAPI", "aviso": "O FastAPI roda <b>de verdade<\/b> no navegador. A primeira verificação desta aba demora mais (10 a 30 s), porque instala o FastAPI. Não use <code>uvicorn.run()<\/code>: a página chama as suas rotas por você."}, {"id": "sqlalchemy", "icone": "🗄️", "nome": "SQLAlchemy", "aviso": "O banco é um SQLite temporário, recriado a cada verificação. Se algum dado \"sumir\", lembre do <code>commit()<\/code>. Vale o estilo clássico (<code>Column<\/code>) ou o 2.0 (<code>Mapped<\/code>): os testes aceitam os dois."}], "itens": [{"id": "q_http", "trilha": "conceitos", "titulo": "Quiz: métodos HTTP", "nivel": "Fácil", "pontos": 15, "enunciado": "Responda todas as perguntas e clique em <b>Verificar respostas<\/b>.", "perguntas": [{"q": "Qual método HTTP é o mais indicado para <b>criar<\/b> um novo recurso (por exemplo, cadastrar um aluno)?", "ops": ["GET", "POST", "DELETE", "PUT"], "c": 1, "why": "POST envia dados para o servidor criar um novo recurso."}, {"q": "Qual método serve para <b>apenas consultar<\/b> dados, sem alterar nada no servidor?", "ops": ["POST", "DELETE", "GET", "PUT"], "c": 2, "why": "GET só lê. Por isso pode ser repetido sem causar efeitos colaterais."}, {"q": "Qual método costuma ser usado para <b>substituir por completo<\/b> um recurso que já existe?", "ops": ["PUT", "GET", "POST", "HEAD"], "c": 0, "why": "PUT substitui o recurso inteiro. Para alterar só uma parte, usa-se PATCH."}, {"q": "O que a chamada <code>DELETE /alunos/7<\/code> deve fazer?", "ops": ["Listar todos os alunos", "Remover o aluno de id 7", "Criar o aluno 7", "Atualizar o aluno 7"], "c": 1, "why": "DELETE remove o recurso indicado no caminho."}, {"q": "No FastAPI, qual decorador cria uma rota que responde a requisições <b>POST<\/b>?", "ops": ["<code>@app.post(\"/rota\")<\/code>", "<code>@app.send(\"/rota\")<\/code>", "<code>@app.get(\"/rota\", method=\"POST\")<\/code>", "<code>@post.app(\"/rota\")<\/code>"], "c": 0, "why": "O nome do decorador é o nome do método: @app.get, @app.post, @app.put, @app.delete."}, {"q": "Uma rota foi declarada só com <code>@app.get(\"/itens\")<\/code>. O que acontece se o cliente chamar essa mesma rota com <b>POST<\/b>?", "ops": ["Funciona normalmente", "Responde 404 Not Found", "Responde 405 Method Not Allowed", "Responde 201 Created"], "c": 2, "why": "O caminho existe, mas não aceita esse método: o FastAPI responde 405."}]}, {"id": "q_status", "trilha": "conceitos", "titulo": "Quiz: códigos de status", "nivel": "Fácil", "pontos": 15, "enunciado": "Responda todas as perguntas e clique em <b>Verificar respostas<\/b>.", "perguntas": [{"q": "Qual código indica sucesso em uma consulta (GET) comum?", "ops": ["200 OK", "201 Created", "404 Not Found", "500 Internal Server Error"], "c": 0, "why": "200 é o sucesso padrão."}, {"q": "Qual código é o mais indicado depois de <b>criar<\/b> um recurso com POST?", "ops": ["200", "201", "204", "422"], "c": 1, "why": "201 Created informa que o recurso foi criado."}, {"q": "Qual código significa sucesso, mas <b>sem conteúdo<\/b> no corpo da resposta (comum em DELETE)?", "ops": ["204", "200", "201", "400"], "c": 0, "why": "204 No Content: deu certo e não há nada para devolver."}, {"q": "O cliente pediu <code>GET /alunos/999<\/code>, mas esse aluno não existe. Qual status devolver?", "ops": ["200", "404", "500", "201"], "c": 1, "why": "404 Not Found: o recurso pedido não existe."}, {"q": "No FastAPI, o que significa o status <b>422<\/b>?", "ops": ["O servidor caiu", "Os dados enviados são inválidos (a validação do Pydantic falhou)", "A rota não existe", "Sucesso sem conteúdo"], "c": 1, "why": "422 Unprocessable Entity: o FastAPI/Pydantic recusou os dados da requisição."}, {"q": "A faixa de códigos <b>5xx<\/b> (como o 500) indica:", "ops": ["Erro do cliente", "Redirecionamento", "Erro no servidor, por exemplo um bug na rota", "Sucesso"], "c": 2, "why": "4xx = erro do cliente; 5xx = erro do servidor."}, {"q": "Para responder 404 com uma mensagem, no FastAPI você usa:", "ops": ["<code>raise HTTPException(status_code=404, detail=\"...\")<\/code>", "<code>return 404<\/code>", "<code>print(404)<\/code>", "<code>app.error(404)<\/code>"], "c": 0, "why": "HTTPException interrompe a rota e devolve o status e a mensagem (detail)."}]}, {"id": "pyd1", "trilha": "pydantic", "titulo": "Primeiro modelo: Aluno", "nivel": "Fácil", "pontos": 10, "enunciado": "Crie a classe <code>Aluno<\/code> (um modelo Pydantic) com os campos <code>nome<\/code> (texto), <code>idade<\/code> (inteiro) e <code>ativo<\/code> (verdadeiro/falso, com valor padrão <code>True<\/code>).", "dicas": ["Um modelo Pydantic é uma classe que herda de <code>BaseModel<\/code>. Cada campo é declarado com <code>nome: tipo<\/code>.", "Estrutura: <code>class Aluno(BaseModel):<\/code> e, indentados, <code>nome: str<\/code>, <code>idade: int<\/code> e <code>ativo: bool = True<\/code>."], "starter": "from pydantic import BaseModel\n\n# Crie a classe Aluno com os campos:\n#   nome  -> texto (obrigatório)\n#   idade -> número inteiro (obrigatório)\n#   ativo -> verdadeiro/falso, com valor padrão True\n\n", "teste": "\ndef verificar():\n    A = getattr(M, \"Aluno\", None)\n    if A is None:\n        return [(\"Existe a classe Aluno\", False, \"Não encontrei a classe Aluno. Confira o nome (com A maiúsculo).\")]\n    return [\n        chk(\"Aluno herda de BaseModel\", lambda: issubclass(A, BaseModel)),\n        chk(\"Aluno(nome='Ana', idade=17) funciona e 'ativo' vem True por padrão\",\n            lambda: (lambda a: (a.nome == \"Ana\" and a.idade == 17 and a.ativo is True, \"ativo = \" + repr(a.ativo)))(A(nome=\"Ana\", idade=17))),\n        chk(\"O Pydantic converte idade='17' (texto) para o número 17\", lambda: A(nome=\"Ana\", idade=\"17\").idade == 17),\n        chk(\"Faltar um campo obrigatório gera erro (sem idade)\", lambda: invalido(lambda: A(nome=\"Ana\"))),\n        chk(\"Um valor que não vira inteiro gera erro (idade='abc')\", lambda: invalido(lambda: A(nome=\"Ana\", idade=\"abc\"))),\n        chk(\"É possível informar ativo=False\", lambda: A(nome=\"Ana\", idade=17, ativo=False).ativo is False),\n    ]\n"}, {"id": "pyd2", "trilha": "pydantic", "titulo": "Validando com Field", "nivel": "Médio", "pontos": 15, "enunciado": "Crie a classe <code>Produto<\/code> com as regras: <code>nome<\/code> com no mínimo <b>3 caracteres<\/b>; <code>preco<\/code> decimal <b>maior que 0<\/b>; <code>estoque<\/code> inteiro <b>maior ou igual a 0<\/b>, com valor padrão <code>0<\/code>.", "dicas": ["Use <code>Field(...)<\/code> para impor regras: <code>min_length<\/code> para tamanho mínimo de texto, <code>gt<\/code> (maior que) e <code>ge<\/code> (maior ou igual) para números.", "Exemplo: <code>nome: str = Field(min_length=3)<\/code>, <code>preco: float = Field(gt=0)<\/code> e <code>estoque: int = Field(default=0, ge=0)<\/code>."], "starter": "from pydantic import BaseModel, Field\n\n# Crie a classe Produto com as regras:\n#   nome    -> texto com no mínimo 3 caracteres\n#   preco   -> número decimal MAIOR que 0\n#   estoque -> inteiro MAIOR OU IGUAL a 0 (padrão: 0)\n\n", "teste": "\ndef verificar():\n    P = getattr(M, \"Produto\", None)\n    if P is None:\n        return [(\"Existe a classe Produto\", False, \"Não encontrei a classe Produto.\")]\n    return [\n        chk(\"Produto(nome='Caneta', preco=2.5) é válido e o estoque padrão é 0\",\n            lambda: (lambda p: (p.estoque == 0 and p.preco == 2.5, \"estoque = \" + repr(p.estoque)))(P(nome=\"Caneta\", preco=2.5))),\n        chk(\"Produto aceita estoque=10\", lambda: P(nome=\"Caneta\", preco=2.5, estoque=10).estoque == 10),\n        chk(\"Nome de 3 letras é aceito (limite mínimo)\", lambda: P(nome=\"Pão\", preco=1).nome == \"Pão\"),\n        chk(\"Nome com 2 letras é recusado\", lambda: invalido(lambda: P(nome=\"Pa\", preco=1))),\n        chk(\"Preço 0 é recusado (precisa ser MAIOR que 0)\", lambda: invalido(lambda: P(nome=\"Caneta\", preco=0))),\n        chk(\"Preço negativo é recusado\", lambda: invalido(lambda: P(nome=\"Caneta\", preco=-3))),\n        chk(\"Estoque negativo é recusado\", lambda: invalido(lambda: P(nome=\"Caneta\", preco=2, estoque=-1))),\n        chk(\"Estoque 0 é aceito (maior OU IGUAL a 0)\", lambda: P(nome=\"Caneta\", preco=2, estoque=0).estoque == 0),\n    ]\n"}, {"id": "pyd3", "trilha": "pydantic", "titulo": "Campos opcionais e model_dump", "nivel": "Médio", "pontos": 15, "enunciado": "Crie a classe <code>Usuario<\/code> com <code>nome<\/code> (texto obrigatório) e <code>email<\/code> (texto <b>opcional<\/b>, padrão <code>None<\/code>). Depois crie a função <code>para_dict(usuario)<\/code>, que devolve os dados do usuário como dicionário <b>sem incluir os campos que estiverem None<\/b>.", "dicas": ["Um campo opcional pode ser declarado como <code>email: str | None = None<\/code>. Todo modelo Pydantic tem o método <code>model_dump()<\/code>, que devolve um dicionário.", "<code>model_dump()<\/code> aceita o parâmetro <code>exclude_none=True<\/code>. Então: <code>def para_dict(usuario): return usuario.model_dump(exclude_none=True)<\/code>."], "starter": "from pydantic import BaseModel\n\n# 1) Crie a classe Usuario: nome (texto obrigatório) e email (texto opcional, padrão None)\n\n# 2) Crie a função para_dict(usuario): devolve os dados como dicionário,\n#    sem incluir os campos que estiverem None\n\n", "teste": "\ndef verificar():\n    U = getattr(M, \"Usuario\", None)\n    f = getattr(M, \"para_dict\", None)\n    if U is None:\n        return [(\"Existe a classe Usuario\", False, \"Não encontrei a classe Usuario.\")]\n    if f is None:\n        return [(\"Existe a função para_dict\", False, \"Não encontrei a função para_dict(usuario).\")]\n    return [\n        chk(\"Usuario(nome='Ana') é válido e o email vem None\", lambda: U(nome=\"Ana\").email is None),\n        chk(\"Usuario sem nome é recusado\", lambda: invalido(lambda: U(email=\"a@b.com\"))),\n        chk(\"model_dump() completo mantém o campo None: {'nome': 'Ana', 'email': None}\",\n            lambda: (U(nome=\"Ana\").model_dump() == {\"nome\": \"Ana\", \"email\": None}, \"veio: \" + repr(U(nome=\"Ana\").model_dump()))),\n        chk(\"para_dict(Usuario(nome='Ana')) == {'nome': 'Ana'}\",\n            lambda: (f(U(nome=\"Ana\")) == {\"nome\": \"Ana\"}, \"veio: \" + repr(f(U(nome=\"Ana\"))))),\n        chk(\"para_dict com email == {'nome': 'Bia', 'email': 'bia@x.com'}\",\n            lambda: (f(U(nome=\"Bia\", email=\"bia@x.com\")) == {\"nome\": \"Bia\", \"email\": \"bia@x.com\"}, \"veio: \" + repr(f(U(nome=\"Bia\", email=\"bia@x.com\"))))),\n    ]\n"}, {"id": "pyd4", "trilha": "pydantic", "titulo": "Validador personalizado", "nivel": "Desafio", "pontos": 20, "enunciado": "Crie a classe <code>Contato<\/code> com <code>nome<\/code> e <code>email<\/code> (ambos texto obrigatório). Valide o e-mail: se <b>não tiver<\/b> <code>@<\/code>, gere um erro; se tiver, guarde-o em <b>letras minúsculas<\/b>.", "dicas": ["No Pydantic v2 existe o decorador <code>@field_validator(\"campo\")<\/code>, aplicado a um método de classe. O método recebe o valor, devolve o valor (já tratado) ou levanta <code>ValueError<\/code>.", "Estrutura: <code>@field_validator(\"email\")<\/code> sobre <code>@classmethod<\/code> sobre <code>def validar_email(cls, v):<\/code>. Dentro: se <code>\"@\" not in v<\/code>, <code>raise ValueError(\"e-mail inválido\")<\/code>; no fim, <code>return v.lower()<\/code>."], "starter": "from pydantic import BaseModel, field_validator\n\n# Crie a classe Contato com nome e email (textos obrigatórios).\n# Valide o email: sem \"@\" -> erro; com \"@\" -> guarde em letras minúsculas.\n\n", "teste": "\ndef verificar():\n    C = getattr(M, \"Contato\", None)\n    if C is None:\n        return [(\"Existe a classe Contato\", False, \"Não encontrei a classe Contato.\")]\n    return [\n        chk(\"Contato(nome='Ana', email='a@b.com') é válido\", lambda: C(nome=\"Ana\", email=\"a@b.com\").email == \"a@b.com\"),\n        chk(\"O e-mail é guardado em minúsculas ('ANA@Mail.COM' vira 'ana@mail.com')\",\n            lambda: (C(nome=\"Ana\", email=\"ANA@Mail.COM\").email == \"ana@mail.com\", \"veio: \" + repr(C(nome=\"Ana\", email=\"ANA@Mail.COM\").email))),\n        chk(\"E-mail sem '@' é recusado\", lambda: invalido(lambda: C(nome=\"Ana\", email=\"anamail.com\"))),\n        chk(\"Faltar o email é recusado\", lambda: invalido(lambda: C(nome=\"Ana\"))),\n    ]\n"}, {"id": "rot1", "trilha": "rotas", "titulo": "Hello, API!", "nivel": "Fácil", "pontos": 10, "fastapi": true, "usaApp": true, "enunciado": "Crie a rota <code>GET /<\/code> que devolve <code>{\"mensagem\": \"API no ar\"}<\/code>.", "dicas": ["Uma rota é uma função com um decorador: <code>@app.get(\"/\")<\/code> logo acima de <code>def ...():<\/code>. O que a função devolve (um dicionário) vira JSON.", "<code>@app.get(\"/\")<\/code> então <code>def raiz():<\/code> e dentro <code>return {\"mensagem\": \"API no ar\"}<\/code>."], "starter": "from fastapi import FastAPI\n\napp = FastAPI()\n\n# Crie a rota GET \"/\" que devolve: {\"mensagem\": \"API no ar\"}\n\n", "teste": "\nasync def verificar():\n    return [\n        esperar(\"GET / responde 200 com {'mensagem': 'API no ar'}\", await req(\"GET\", \"/\"), status=200, corpo={\"mensagem\": \"API no ar\"}),\n        esperar(\"POST / não é permitido nessa rota (405 Method Not Allowed)\", await req(\"POST\", \"/\"), status=405),\n    ]\n"}, {"id": "rot2", "trilha": "rotas", "titulo": "Parâmetro de rota", "nivel": "Fácil", "pontos": 15, "fastapi": true, "usaApp": true, "enunciado": "Crie a rota <code>GET /livros/{livro_id}<\/code>. Ela deve procurar o título no dicionário <code>livros<\/code> e devolver <code>{\"id\": 2, \"titulo\": \"Iracema\"}<\/code> (para o id 2). O <code>livro_id<\/code> precisa ser <b>inteiro<\/b>.", "dicas": ["Parâmetros de rota ficam entre chaves no caminho: <code>\"/livros/{livro_id}\"<\/code>, e viram parâmetros da função com o mesmo nome. Se você declarar o tipo (<code>livro_id: int<\/code>), o FastAPI converte e valida sozinho.", "<code>@app.get(\"/livros/{livro_id}\")<\/code>, depois <code>def buscar_livro(livro_id: int):<\/code> e <code>return {\"id\": livro_id, \"titulo\": livros[livro_id]}<\/code>."], "starter": "from fastapi import FastAPI\n\napp = FastAPI()\n\nlivros = {1: \"Dom Casmurro\", 2: \"Iracema\", 3: \"Vidas Secas\"}\n\n# Crie a rota GET /livros/{livro_id}\n# Para /livros/2 a resposta deve ser: {\"id\": 2, \"titulo\": \"Iracema\"}\n\n", "teste": "\nasync def verificar():\n    return [\n        esperar(\"GET /livros/2 devolve {'id': 2, 'titulo': 'Iracema'}\", await req(\"GET\", \"/livros/2\"), status=200, corpo={\"id\": 2, \"titulo\": \"Iracema\"}),\n        esperar(\"GET /livros/1 devolve {'id': 1, 'titulo': 'Dom Casmurro'} (o id vem como número)\", await req(\"GET\", \"/livros/1\"), status=200, corpo={\"id\": 1, \"titulo\": \"Dom Casmurro\"}),\n        esperar(\"GET /livros/abc responde 422 (o id precisa ser inteiro)\", await req(\"GET\", \"/livros/abc\"), status=422),\n    ]\n"}, {"id": "rot3", "trilha": "rotas", "titulo": "Parâmetros de consulta (query)", "nivel": "Médio", "pontos": 15, "fastapi": true, "usaApp": true, "enunciado": "Crie duas rotas: <code>GET /saudacao?nome=Ana<\/code> devolve <code>{\"mensagem\": \"Olá, Ana!\"}<\/code> e, se <code>nome<\/code> não for enviado, usa <code>\"visitante\"<\/code>; e <code>GET /somar?a=2&amp;b=3<\/code> devolve <code>{\"resultado\": 5}<\/code>, com <code>a<\/code> e <code>b<\/code> inteiros obrigatórios.", "dicas": ["Parâmetros que <b>não<\/b> aparecem no caminho viram parâmetros de consulta (<code>?nome=Ana<\/code>). Dar um valor padrão (<code>nome: str = \"visitante\"<\/code>) deixa o parâmetro opcional; sem padrão, ele é obrigatório.", "<code>def saudacao(nome: str = \"visitante\")<\/code> devolve <code>{\"mensagem\": f\"Olá, {nome}!\"}<\/code>. <code>def somar(a: int, b: int)<\/code> devolve <code>{\"resultado\": a + b}<\/code>."], "starter": "from fastapi import FastAPI\n\napp = FastAPI()\n\n# 1) GET /saudacao?nome=Ana -> {\"mensagem\": \"Olá, Ana!\"}\n#    Sem o parâmetro nome, use \"visitante\".\n# 2) GET /somar?a=2&b=3 -> {\"resultado\": 5}   (a e b são inteiros obrigatórios)\n\n", "teste": "\nasync def verificar():\n    return [\n        esperar(\"GET /saudacao?nome=Ana devolve {'mensagem': 'Olá, Ana!'}\", await req(\"GET\", \"/saudacao\", query=\"nome=Ana\"), status=200, corpo={\"mensagem\": \"Olá, Ana!\"}),\n        esperar(\"GET /saudacao (sem nome) devolve {'mensagem': 'Olá, visitante!'}\", await req(\"GET\", \"/saudacao\"), status=200, corpo={\"mensagem\": \"Olá, visitante!\"}),\n        esperar(\"GET /somar?a=2&b=3 devolve {'resultado': 5}\", await req(\"GET\", \"/somar\", query=\"a=2&b=3\"), status=200, corpo={\"resultado\": 5}),\n        esperar(\"GET /somar?a=2 (faltou o b) responde 422\", await req(\"GET\", \"/somar\", query=\"a=2\"), status=422),\n        esperar(\"GET /somar?a=x&b=3 (a não é inteiro) responde 422\", await req(\"GET\", \"/somar\", query=\"a=x&b=3\"), status=422),\n    ]\n"}, {"id": "rot4", "trilha": "rotas", "titulo": "Quando não existe: 404", "nivel": "Médio", "pontos": 15, "fastapi": true, "usaApp": true, "enunciado": "A rota abaixo quebra (erro 500) quando o livro não existe. Corrija: se o <code>livro_id<\/code> não estiver no dicionário, responda <b>404<\/b> com a mensagem <code>\"Livro não encontrado\"<\/code>.", "dicas": ["Para devolver um erro HTTP no FastAPI você levanta uma exceção: <code>raise HTTPException(status_code=..., detail=\"...\")<\/code>. Ela já foi importada no topo do código.", "Antes do <code>return<\/code>, escreva: <code>if livro_id not in livros:<\/code> e, indentado, <code>raise HTTPException(status_code=404, detail=\"Livro não encontrado\")<\/code>."], "starter": "from fastapi import FastAPI, HTTPException\n\napp = FastAPI()\n\nlivros = {1: \"Dom Casmurro\", 2: \"Iracema\", 3: \"Vidas Secas\"}\n\n\n@app.get(\"/livros/{livro_id}\")\ndef buscar_livro(livro_id: int):\n    # TODO: se o livro não existir, responda 404 com a mensagem \"Livro não encontrado\"\n    return {\"id\": livro_id, \"titulo\": livros[livro_id]}\n", "teste": "\nasync def verificar():\n    return [\n        esperar(\"GET /livros/1 continua funcionando (200)\", await req(\"GET\", \"/livros/1\"), status=200, corpo={\"id\": 1, \"titulo\": \"Dom Casmurro\"}),\n        esperar(\"GET /livros/99 responde 404\", await req(\"GET\", \"/livros/99\"), status=404),\n        esperar(\"A mensagem do 404 é {'detail': 'Livro não encontrado'}\", await req(\"GET\", \"/livros/99\"), status=404, corpo={\"detail\": \"Livro não encontrado\"}),\n    ]\n"}, {"id": "rot5", "trilha": "rotas", "titulo": "Criando com POST (201)", "nivel": "Médio", "pontos": 20, "fastapi": true, "usaApp": true, "enunciado": "Crie duas rotas: <code>POST /livros<\/code>, que recebe <code>LivroEntrada<\/code> no corpo, guarda em <code>banco<\/code> e devolve <code>{\"id\": ..., \"titulo\": ..., \"autor\": ...}<\/code> com status <b>201<\/b> (o id é <code>1<\/code> para o primeiro, <code>2<\/code> para o segundo...); e <code>GET /livros<\/code>, que devolve a lista de todos os livros cadastrados.", "dicas": ["Um parâmetro cujo tipo é um modelo Pydantic (<code>dados: LivroEntrada<\/code>) é lido do <b>corpo<\/b> da requisição. O status de sucesso se define no decorador: <code>@app.post(\"/livros\", status_code=201)<\/code>.", "Monte o dicionário com <code>{\"id\": len(banco) + 1, **dados.model_dump()}<\/code>, faça <code>banco.append(livro)<\/code> e <code>return livro<\/code>. A rota GET devolve <code>banco<\/code>."], "starter": "from fastapi import FastAPI\nfrom pydantic import BaseModel\n\napp = FastAPI()\n\n\nclass LivroEntrada(BaseModel):\n    titulo: str\n    autor: str\n\n\nbanco = []\n\n# 1) POST /livros -> guarda em `banco` e devolve {\"id\": ..., \"titulo\": ..., \"autor\": ...} com status 201\n# 2) GET /livros  -> devolve a lista de todos os livros cadastrados\n\n", "teste": "\nasync def verificar():\n    l1 = {\"id\": 1, \"titulo\": \"Iracema\", \"autor\": \"José de Alencar\"}\n    l2 = {\"id\": 2, \"titulo\": \"Vidas Secas\", \"autor\": \"Graciliano Ramos\"}\n    return [\n        esperar(\"POST /livros cria o primeiro livro: status 201 e id 1\", await req(\"POST\", \"/livros\", {\"titulo\": \"Iracema\", \"autor\": \"José de Alencar\"}), status=201, corpo=l1),\n        esperar(\"O segundo POST recebe id 2\", await req(\"POST\", \"/livros\", {\"titulo\": \"Vidas Secas\", \"autor\": \"Graciliano Ramos\"}), status=201, corpo=l2),\n        esperar(\"GET /livros devolve a lista com os 2 livros\", await req(\"GET\", \"/livros\"), status=200, corpo=[l1, l2]),\n        esperar(\"POST /livros sem o campo autor responde 422\", await req(\"POST\", \"/livros\", {\"titulo\": \"Sem autor\"}), status=422),\n    ]\n"}, {"id": "rot6", "trilha": "rotas", "titulo": "Atualizando e removendo (PUT e DELETE)", "nivel": "Médio", "pontos": 25, "fastapi": true, "usaApp": true, "enunciado": "Complete a API de tarefas: <code>PUT /tarefas/{tarefa_id}<\/code> substitui a tarefa pelos dados recebidos (modelo <code>Tarefa<\/code>) e devolve a tarefa atualizada; <code>DELETE /tarefas/{tarefa_id}<\/code> remove a tarefa e responde <b>204<\/b> (sem corpo). Nos dois casos, se a tarefa não existir, responda <b>404<\/b> com a mensagem <code>\"Tarefa não encontrada\"<\/code>.", "dicas": ["PUT e DELETE usam os decoradores <code>@app.put(...)<\/code> e <code>@app.delete(..., status_code=204)<\/code>. Nas duas rotas você recebe o <code>tarefa_id<\/code> do caminho; no PUT, também o corpo (<code>dados: Tarefa<\/code>).", "No PUT: verifique se o id existe (senão, <code>HTTPException<\/code> 404), faça <code>tarefas[tarefa_id] = dados.model_dump()<\/code> e devolva <code>tarefas[tarefa_id]<\/code>. No DELETE: verifique o id, use <code>del tarefas[tarefa_id]<\/code> e não devolva nada."], "starter": "from fastapi import FastAPI, HTTPException\nfrom pydantic import BaseModel\n\napp = FastAPI()\n\n\nclass Tarefa(BaseModel):\n    titulo: str\n    feita: bool = False\n\n\ntarefas = {\n    1: {\"titulo\": \"Estudar FastAPI\", \"feita\": False},\n    2: {\"titulo\": \"Praticar SQLAlchemy\", \"feita\": False},\n}\n\n\n@app.get(\"/tarefas/{tarefa_id}\")\ndef ver_tarefa(tarefa_id: int):\n    if tarefa_id not in tarefas:\n        raise HTTPException(status_code=404, detail=\"Tarefa não encontrada\")\n    return tarefas[tarefa_id]\n\n\n# 1) PUT /tarefas/{tarefa_id}    -> substitui a tarefa e devolve a tarefa atualizada (404 se não existir)\n# 2) DELETE /tarefas/{tarefa_id} -> remove a tarefa e responde 204 sem corpo (404 se não existir)\n\n", "teste": "\nasync def verificar():\n    nova = {\"titulo\": \"Estudar muito\", \"feita\": True}\n    return [\n        esperar(\"PUT /tarefas/1 responde 200 com a tarefa atualizada\", await req(\"PUT\", \"/tarefas/1\", nova), status=200, corpo=nova),\n        esperar(\"Depois do PUT, GET /tarefas/1 mostra os novos dados\", await req(\"GET\", \"/tarefas/1\"), status=200, corpo=nova),\n        esperar(\"PUT /tarefas/99 responde 404 com a mensagem 'Tarefa não encontrada'\", await req(\"PUT\", \"/tarefas/99\", nova), status=404, corpo={\"detail\": \"Tarefa não encontrada\"}),\n        esperar(\"PUT sem o campo titulo responde 422\", await req(\"PUT\", \"/tarefas/1\", {\"feita\": True}), status=422),\n        esperar(\"DELETE /tarefas/2 responde 204 sem corpo\", await req(\"DELETE\", \"/tarefas/2\"), status=204, vazio=True),\n        esperar(\"Depois do DELETE, GET /tarefas/2 responde 404\", await req(\"GET\", \"/tarefas/2\"), status=404),\n        esperar(\"DELETE /tarefas/2 de novo responde 404 com 'Tarefa não encontrada'\", await req(\"DELETE\", \"/tarefas/2\"), status=404, corpo={\"detail\": \"Tarefa não encontrada\"}),\n    ]\n"}, {"id": "rot7", "trilha": "rotas", "titulo": "Escondendo dados com response_model", "nivel": "Desafio", "pontos": 25, "fastapi": true, "usaApp": true, "enunciado": "Crie <code>POST /usuarios<\/code> (status <b>201<\/b>). Ele recebe <code>UsuarioEntrada<\/code> (com senha), guarda o usuário na lista <code>usuarios<\/code> <b>incluindo a senha<\/b> e devolve <code>UsuarioSaida<\/code> (<code>id<\/code>, <code>nome<\/code>, <code>email<\/code>) <b>sem a senha<\/b>. O id é 1 para o primeiro, 2 para o segundo...", "dicas": ["O parâmetro <code>response_model=UsuarioSaida<\/code> no decorador faz o FastAPI filtrar a resposta e devolver só os campos desse modelo, mesmo que você retorne um dicionário com mais dados.", "<code>@app.post(\"/usuarios\", status_code=201, response_model=UsuarioSaida)<\/code>. Dentro: <code>usuario = {\"id\": len(usuarios) + 1, **dados.model_dump()}<\/code>, <code>usuarios.append(usuario)<\/code> e <code>return usuario<\/code>."], "starter": "from fastapi import FastAPI\nfrom pydantic import BaseModel\n\napp = FastAPI()\n\n\nclass UsuarioEntrada(BaseModel):\n    nome: str\n    email: str\n    senha: str\n\n\nclass UsuarioSaida(BaseModel):\n    id: int\n    nome: str\n    email: str\n\n\nusuarios = []\n\n# Crie POST /usuarios (status 201).\n# Guarde o usuário (com a senha) em `usuarios`, mas NUNCA devolva a senha na resposta.\n\n", "teste": "\nasync def verificar():\n    r1 = await req(\"POST\", \"/usuarios\", {\"nome\": \"Ana\", \"email\": \"ana@x.com\", \"senha\": \"segredo123\"})\n    r2 = await req(\"POST\", \"/usuarios\", {\"nome\": \"Bia\", \"email\": \"bia@x.com\", \"senha\": \"outra456\"})\n    return [\n        esperar(\"POST /usuarios responde 201\", r1, status=201),\n        esperar(\"A resposta é {'id': 1, 'nome': 'Ana', 'email': 'ana@x.com'}\", r1, corpo={\"id\": 1, \"nome\": \"Ana\", \"email\": \"ana@x.com\"}),\n        esperar(\"A senha NÃO aparece na resposta\", r1, sem=(\"senha\",)),\n        esperar(\"O segundo usuário recebe id 2\", r2, status=201, corpo={\"id\": 2, \"nome\": \"Bia\", \"email\": \"bia@x.com\"}),\n        chk(\"Os 2 usuários foram guardados na lista `usuarios`, com a senha\",\n            lambda: (len(M.usuarios) == 2 and \"segredo123\" in str(M.usuarios[0]) and \"outra456\" in str(M.usuarios[1]),\n                     \"a lista tem \" + str(len(M.usuarios)) + \" item(ns); confira se a senha também foi guardada\")),\n        esperar(\"Dados incompletos (sem senha) respondem 422\", await req(\"POST\", \"/usuarios\", {\"nome\": \"Cleo\", \"email\": \"c@x.com\"}), status=422),\n    ]\n"}, {"id": "sql1", "trilha": "sqlalchemy", "titulo": "Mapeando a tabela", "nivel": "Fácil", "pontos": 15, "enunciado": "Crie o modelo <code>Livro<\/code> para a tabela <code>livros<\/code>, com as colunas: <code>id<\/code> (inteiro, chave primária), <code>titulo<\/code> (texto até 100, <b>obrigatório<\/b>), <code>autor<\/code> (texto até 100, obrigatório) e <code>ano<\/code> (inteiro).", "dicas": ["O modelo é uma classe que herda de <code>Base<\/code>. Ela precisa de <code>__tablename__<\/code> e de uma coluna para cada campo, declarada com <code>Column(...)<\/code> (ou <code>mapped_column<\/code>, no estilo 2.0).", "<code>id = Column(Integer, primary_key=True)<\/code>; <code>titulo = Column(String(100), nullable=False)<\/code>; <code>autor = Column(String(100), nullable=False)<\/code>; <code>ano = Column(Integer)<\/code>."], "starter": "from sqlalchemy import create_engine, Column, Integer, String\nfrom sqlalchemy.orm import declarative_base, sessionmaker\n\nengine = create_engine(\"sqlite:///./livraria.db\", connect_args={\"check_same_thread\": False})\nBase = declarative_base()\nSessionLocal = sessionmaker(bind=engine)\n\n# --- Escreva aqui o modelo Livro (tabela \"livros\") ---\n# id (inteiro, chave primária), titulo (texto até 100, obrigatório),\n# autor (texto até 100, obrigatório) e ano (inteiro)\n\n\nBase.metadata.create_all(engine)\n", "teste": "\ndef verificar():\n    from sqlalchemy import inspect, select\n    from sqlalchemy.orm import Session\n    from sqlalchemy.exc import IntegrityError\n    L = getattr(M, \"Livro\", None)\n    eng = getattr(M, \"engine\", None)\n    if L is None:\n        return [(\"Existe a classe Livro\", False, \"Não encontrei a classe Livro.\")]\n    if eng is None:\n        return [(\"Existe a variável engine\", False, \"Mantenha as linhas iniciais do código (engine, Base e SessionLocal).\")]\n\n    def colunas():\n        return {c[\"name\"]: c for c in inspect(eng).get_columns(\"livros\")}\n\n    def inserir_valido():\n        with Session(eng) as s:\n            s.add(L(titulo=\"Iracema\", autor=\"José de Alencar\", ano=1865))\n            s.commit()\n        with Session(eng) as s:\n            lin = s.scalars(select(L)).all()\n            return (len(lin) == 1 and lin[0].id == 1 and lin[0].titulo == \"Iracema\" and lin[0].ano == 1865, \"linhas: \" + str(len(lin)))\n\n    def sem_titulo():\n        with Session(eng) as s:\n            s.add(L(autor=\"Alguém\", ano=2000))\n            try:\n                s.commit()\n            except IntegrityError:\n                s.rollback()\n                return True\n        return False\n\n    return [\n        chk(\"A tabela se chama 'livros' (e foi criada)\", lambda: ((\"livros\" in inspect(eng).get_table_names()), \"tabelas: \" + str(inspect(eng).get_table_names()))),\n        chk(\"A tabela tem as colunas id, titulo, autor e ano\", lambda: (set(colunas()) >= {\"id\", \"titulo\", \"autor\", \"ano\"}, \"colunas: \" + str(sorted(colunas())))),\n        chk(\"id é a chave primária\", lambda: (inspect(eng).get_pk_constraint(\"livros\")[\"constrained_columns\"] == [\"id\"], \"chave primária: \" + str(inspect(eng).get_pk_constraint(\"livros\")[\"constrained_columns\"]))),\n        chk(\"titulo e autor são obrigatórios (nullable=False)\", lambda: (colunas()[\"titulo\"][\"nullable\"] is False and colunas()[\"autor\"][\"nullable\"] is False, \"confira nullable=False\")),\n        chk(\"É possível gravar e ler um Livro (o id começa em 1)\", inserir_valido),\n        chk(\"Gravar um livro sem título é recusado pelo banco\", sem_titulo),\n    ]\n"}, {"id": "sql2", "trilha": "sqlalchemy", "titulo": "Inserindo registros", "nivel": "Fácil", "pontos": 15, "enunciado": "O modelo <code>Livro<\/code> já está pronto. Abra uma sessão (<code>SessionLocal<\/code>), adicione os <b>3 livros<\/b> indicados no código e faça <code>commit<\/code>.", "dicas": ["Uma sessão é aberta com <code>SessionLocal()<\/code>. Use <code>session.add(objeto)<\/code> (ou <code>add_all([...])<\/code>) e depois <code>session.commit()<\/code> para gravar de verdade. Feche com <code>session.close()<\/code> (ou use <code>with<\/code>).", "Exemplo: <code>with SessionLocal() as session:<\/code>, e dentro <code>session.add_all([Livro(titulo=\"Dom Casmurro\", autor=\"Machado de Assis\", ano=1899), ...])<\/code> e <code>session.commit()<\/code>."], "starter": "from sqlalchemy import create_engine, Column, Integer, String\nfrom sqlalchemy.orm import declarative_base, sessionmaker\n\nengine = create_engine(\"sqlite:///./livraria.db\", connect_args={\"check_same_thread\": False})\nBase = declarative_base()\nSessionLocal = sessionmaker(bind=engine)\n\n\nclass Livro(Base):\n    __tablename__ = \"livros\"\n    id = Column(Integer, primary_key=True, index=True)\n    titulo = Column(String(100), nullable=False)\n    autor = Column(String(100), nullable=False)\n    ano = Column(Integer)\n\n\nBase.metadata.create_all(engine)\n\n# Abra uma sessão, adicione os 3 livros abaixo e faça commit:\n#   \"Dom Casmurro\", \"Machado de Assis\", 1899\n#   \"Iracema\", \"José de Alencar\", 1865\n#   \"Vidas Secas\", \"Graciliano Ramos\", 1938\n\n", "teste": "\ndef verificar():\n    from sqlalchemy import select\n    from sqlalchemy.orm import Session\n    L = getattr(M, \"Livro\", None)\n    eng = getattr(M, \"engine\", None)\n    if L is None or eng is None:\n        return [(\"Existem Livro e engine\", False, \"Mantenha o código inicial (engine e a classe Livro).\")]\n    esperado = {(\"Dom Casmurro\", \"Machado de Assis\", 1899), (\"Iracema\", \"José de Alencar\", 1865), (\"Vidas Secas\", \"Graciliano Ramos\", 1938)}\n\n    def lidos():\n        with Session(eng) as s:\n            return [(x.titulo, x.autor, x.ano) for x in s.scalars(select(L)).all()]\n\n    return [\n        chk(\"Existem exatamente 3 livros no banco\", lambda: (len(lidos()) == 3, \"há \" + str(len(lidos())) + \" livro(s) no banco\" + (\" (você chamou commit()?)\" if len(lidos()) == 0 else \"\"))),\n        chk(\"Os 3 livros pedidos foram gravados com os dados corretos\", lambda: (set(lidos()) == esperado, \"encontrados: \" + str(sorted(lidos())))),\n    ]\n"}, {"id": "sql3", "trilha": "sqlalchemy", "titulo": "Consultando com filtro", "nivel": "Médio", "pontos": 20, "enunciado": "Os livros já estão cadastrados. Escreva a função <code>livros_depois_de(ano)<\/code>, que devolve uma <b>lista com os títulos<\/b> dos livros publicados <b>depois<\/b> do ano informado, do mais antigo para o mais novo.", "dicas": ["Abra uma sessão e consulte com <code>session.query(Livro).filter(Livro.ano &gt; ano).order_by(Livro.ano).all()<\/code> (estilo clássico) ou com <code>select(Livro).where(...)<\/code> (estilo 2.0).", "A consulta devolve objetos <code>Livro<\/code>. Para devolver só os títulos, use uma compreensão de lista: <code>[livro.titulo for livro in resultado]<\/code>."], "starter": "from sqlalchemy import create_engine, Column, Integer, String\nfrom sqlalchemy.orm import declarative_base, sessionmaker\n\nengine = create_engine(\"sqlite:///./livraria.db\", connect_args={\"check_same_thread\": False})\nBase = declarative_base()\nSessionLocal = sessionmaker(bind=engine)\n\n\nclass Livro(Base):\n    __tablename__ = \"livros\"\n    id = Column(Integer, primary_key=True, index=True)\n    titulo = Column(String(100), nullable=False)\n    autor = Column(String(100), nullable=False)\n    ano = Column(Integer)\n\n\nBase.metadata.create_all(engine)\n\n\nwith SessionLocal() as db:\n    db.add_all([\n        Livro(titulo=\"Dom Casmurro\", autor=\"Machado de Assis\", ano=1899),\n        Livro(titulo=\"Iracema\", autor=\"José de Alencar\", ano=1865),\n        Livro(titulo=\"Vidas Secas\", autor=\"Graciliano Ramos\", ano=1938),\n        Livro(titulo=\"O Cortiço\", autor=\"Aluísio Azevedo\", ano=1890),\n        Livro(titulo=\"Grande Sertão: Veredas\", autor=\"Guimarães Rosa\", ano=1956),\n    ])\n    db.commit()\n\n\ndef livros_depois_de(ano):\n    \"\"\"Devolve a lista de títulos dos livros publicados DEPOIS do ano, do mais antigo ao mais novo.\"\"\"\n    ...\n", "teste": "\ndef verificar():\n    f = getattr(M, \"livros_depois_de\", None)\n    if f is None:\n        return [(\"Existe a função livros_depois_de(ano)\", False, \"Não encontrei a função livros_depois_de.\")]\n    def t(ano, esperado):\n        return lambda: (f(ano) == esperado, \"devolveu: \" + repr(f(ano)))\n    return [\n        chk(\"livros_depois_de(1890) -> ['Dom Casmurro', 'Vidas Secas', 'Grande Sertão: Veredas']\", t(1890, [\"Dom Casmurro\", \"Vidas Secas\", \"Grande Sertão: Veredas\"])),\n        chk(\"livros_depois_de(1900) -> ['Vidas Secas', 'Grande Sertão: Veredas']\", t(1900, [\"Vidas Secas\", \"Grande Sertão: Veredas\"])),\n        chk(\"livros_depois_de(2000) -> [] (nenhum livro)\", t(2000, [])),\n        chk(\"livros_depois_de(1800) devolve os 5 títulos, do mais antigo ao mais novo\",\n            t(1800, [\"Iracema\", \"O Cortiço\", \"Dom Casmurro\", \"Vidas Secas\", \"Grande Sertão: Veredas\"])),\n    ]\n"}, {"id": "sql4", "trilha": "sqlalchemy", "titulo": "Atualizando e removendo", "nivel": "Médio", "pontos": 25, "enunciado": "Escreva duas funções: <code>corrigir_ano(livro_id, novo_ano)<\/code>, que atualiza o ano do livro e devolve <code>True<\/code> (ou <code>False<\/code> se o livro não existir); e <code>remover_livro(livro_id)<\/code>, que apaga o livro e devolve <code>True<\/code> (ou <code>False<\/code> se não existir). As alterações precisam ser gravadas (<code>commit<\/code>).", "dicas": ["Busque o livro com <code>db.get(Livro, livro_id)<\/code> (ou <code>db.query(Livro).get(...)<\/code>). Se vier <code>None<\/code>, devolva <code>False<\/code>. Para atualizar, basta mudar o atributo (<code>livro.ano = novo_ano<\/code>); para apagar, use <code>db.delete(livro)<\/code>.", "Depois de alterar ou apagar, chame <code>db.commit()<\/code>, senão nada é gravado. Estrutura: <code>with SessionLocal() as db:<\/code>, busca, <code>if livro is None: return False<\/code>, altera/apaga, <code>db.commit()<\/code>, <code>return True<\/code>."], "starter": "from sqlalchemy import create_engine, Column, Integer, String\nfrom sqlalchemy.orm import declarative_base, sessionmaker\n\nengine = create_engine(\"sqlite:///./livraria.db\", connect_args={\"check_same_thread\": False})\nBase = declarative_base()\nSessionLocal = sessionmaker(bind=engine)\n\n\nclass Livro(Base):\n    __tablename__ = \"livros\"\n    id = Column(Integer, primary_key=True, index=True)\n    titulo = Column(String(100), nullable=False)\n    autor = Column(String(100), nullable=False)\n    ano = Column(Integer)\n\n\nBase.metadata.create_all(engine)\n\n\nwith SessionLocal() as db:\n    db.add_all([\n        Livro(titulo=\"Dom Casmurro\", autor=\"Machado de Assis\", ano=1899),\n        Livro(titulo=\"Iracema\", autor=\"José de Alencar\", ano=1865),\n        Livro(titulo=\"Vidas Secas\", autor=\"Graciliano Ramos\", ano=1938),\n    ])\n    db.commit()\n\n\ndef corrigir_ano(livro_id, novo_ano):\n    \"\"\"Atualiza o ano do livro. Devolve True se atualizou, False se o livro não existe.\"\"\"\n    ...\n\n\ndef remover_livro(livro_id):\n    \"\"\"Apaga o livro. Devolve True se apagou, False se o livro não existe.\"\"\"\n    ...\n", "teste": "\ndef verificar():\n    from sqlalchemy import select\n    from sqlalchemy.orm import Session\n    f1 = getattr(M, \"corrigir_ano\", None)\n    f2 = getattr(M, \"remover_livro\", None)\n    if f1 is None or f2 is None:\n        return [(\"Existem corrigir_ano e remover_livro\", False, \"Não encontrei uma das funções (corrigir_ano / remover_livro).\")]\n\n    def banco():\n        with Session(M.engine) as s:\n            return {x.id: (x.titulo, x.ano) for x in s.scalars(select(M.Livro)).all()}\n\n    return [\n        chk(\"corrigir_ano(1, 1900) devolve True\", lambda: (f1(1, 1900) is True, \"devolveu um valor diferente de True\")),\n        chk(\"O ano do livro 1 foi gravado como 1900 no banco\", lambda: (banco().get(1, (None, None))[1] == 1900, \"banco: \" + str(banco()) + \" (faltou commit?)\")),\n        chk(\"Os outros livros não foram alterados\", lambda: (banco().get(2, (None, None))[1] == 1865 and banco().get(3, (None, None))[1] == 1938, \"banco: \" + str(banco()))),\n        chk(\"corrigir_ano(99, 2000) devolve False (livro inexistente)\", lambda: (f1(99, 2000) is False, \"devolveu um valor diferente de False\")),\n        chk(\"remover_livro(2) devolve True\", lambda: (f2(2) is True, \"devolveu um valor diferente de True\")),\n        chk(\"O livro 2 não está mais no banco\", lambda: (2 not in banco(), \"banco: \" + str(banco()) + \" (faltou commit?)\")),\n        chk(\"remover_livro(2) de novo devolve False\", lambda: (f2(2) is False, \"devolveu um valor diferente de False\")),\n        chk(\"Sobraram exatamente 2 livros\", lambda: (len(banco()) == 2, \"há \" + str(len(banco())) + \" livro(s)\")),\n    ]\n"}, {"id": "sql5", "trilha": "sqlalchemy", "titulo": "FastAPI + SQLAlchemy juntos", "nivel": "Desafio", "pontos": 30, "fastapi": true, "usaApp": true, "enunciado": "Una tudo! Crie as rotas usando o banco: <code>POST /livros<\/code> (cria e devolve <code>LivroSaida<\/code> com status <b>201<\/b>), <code>GET /livros<\/code> (lista todos) e <code>GET /livros/{livro_id}<\/code> (devolve um livro ou <b>404<\/b> com <code>\"Livro não encontrado\"<\/code>). Use a dependência <code>get_db<\/code> que já está pronta.", "dicas": ["Receba a sessão com <code>db: Session = Depends(get_db)<\/code> (importe <code>Depends<\/code>). Para criar: monte o objeto <code>Livro(**dados.model_dump())<\/code>, use <code>db.add<\/code>, <code>db.commit<\/code> e <code>db.refresh<\/code>, e devolva o objeto: o <code>response_model=LivroSaida<\/code> faz a conversão.", "Listar: <code>db.query(Livro).all()<\/code>. Buscar um: <code>db.get(Livro, livro_id)<\/code>; se vier <code>None<\/code>, <code>raise HTTPException(status_code=404, detail=\"Livro não encontrado\")<\/code>. Use <code>response_model=list[LivroSaida]<\/code> na listagem."], "starter": "from fastapi import FastAPI, Depends, HTTPException\nfrom pydantic import BaseModel\nfrom sqlalchemy import create_engine, Column, Integer, String\nfrom sqlalchemy.orm import declarative_base, sessionmaker, Session\n\nengine = create_engine(\"sqlite:///./livraria.db\", connect_args={\"check_same_thread\": False})\nBase = declarative_base()\nSessionLocal = sessionmaker(bind=engine)\n\n\nclass Livro(Base):\n    __tablename__ = \"livros\"\n    id = Column(Integer, primary_key=True, index=True)\n    titulo = Column(String(100), nullable=False)\n    autor = Column(String(100), nullable=False)\n\n\nBase.metadata.create_all(engine)\n\n\nclass LivroEntrada(BaseModel):\n    titulo: str\n    autor: str\n\n\nclass LivroSaida(BaseModel):\n    id: int\n    titulo: str\n    autor: str\n    model_config = {\"from_attributes\": True}\n\n\napp = FastAPI()\n\n\ndef get_db():\n    db = SessionLocal()\n    try:\n        yield db\n    finally:\n        db.close()\n\n\n# 1) POST /livros              -> cria o livro no banco e devolve LivroSaida (status 201)\n# 2) GET /livros               -> lista todos os livros\n# 3) GET /livros/{livro_id}    -> devolve um livro ou 404 (\"Livro não encontrado\")\n\n", "teste": "\nasync def verificar():\n    from sqlalchemy import select, func\n    from sqlalchemy.orm import Session\n    l1 = {\"id\": 1, \"titulo\": \"Dom Casmurro\", \"autor\": \"Machado de Assis\"}\n    l2 = {\"id\": 2, \"titulo\": \"Iracema\", \"autor\": \"José de Alencar\"}\n\n    def conta():\n        with Session(M.engine) as s:\n            return s.scalar(select(func.count()).select_from(M.Livro))\n\n    r = []\n    r.append(esperar(\"POST /livros cria o primeiro livro: 201 e {'id': 1, ...}\", await req(\"POST\", \"/livros\", {\"titulo\": \"Dom Casmurro\", \"autor\": \"Machado de Assis\"}), status=201, corpo=l1))\n    r.append(esperar(\"O segundo POST recebe id 2\", await req(\"POST\", \"/livros\", {\"titulo\": \"Iracema\", \"autor\": \"José de Alencar\"}), status=201, corpo=l2))\n    r.append(esperar(\"POST sem o campo autor responde 422\", await req(\"POST\", \"/livros\", {\"titulo\": \"Sem autor\"}), status=422))\n    r.append(esperar(\"GET /livros lista os 2 livros\", await req(\"GET\", \"/livros\"), status=200, corpo=[l1, l2]))\n    r.append(esperar(\"GET /livros/2 devolve o livro 2\", await req(\"GET\", \"/livros/2\"), status=200, corpo=l2))\n    r.append(esperar(\"GET /livros/99 responde 404 com 'Livro não encontrado'\", await req(\"GET\", \"/livros/99\"), status=404, corpo={\"detail\": \"Livro não encontrado\"}))\n    r.append(chk(\"Os 2 livros foram realmente gravados no banco (commit)\", lambda: (conta() == 2, \"há \" + str(conta()) + \" livro(s) gravado(s) no banco\")))\n    return r\n"}]};
+var PY_HARNESS = DATA.harness;
+
+/* =====================  UTILIDADES  ===================== */
+function el(tag, props){
+  var e = document.createElement(tag);
+  props = props || {};
+  Object.keys(props).forEach(function(k){
+    var v = props[k];
+    if (k === "class") e.className = v;
+    else if (k === "html") e.innerHTML = v;
+    else if (k.indexOf("on") === 0) e.addEventListener(k.slice(2), v);
+    else if (v !== false && v !== null && v !== undefined) e.setAttribute(k, v);
+  });
+  for (var i = 2; i < arguments.length; i++){
+    var f = arguments[i];
+    if (f === null || f === undefined) continue;
+    if (Array.isArray(f)) f.forEach(function(x){ if (x != null) e.append(x); });
+    else e.append(f);
+  }
+  return e;
+}
+function msg(tipo, html){ return el("div", {"class":"msg " + tipo, html: html}); }
+function msgTxt(tipo, txt){ return el("div", {"class":"msg " + tipo}, txt); }
+function carregarScript(src){
+  return new Promise(function(res, rej){
+    var s = document.createElement("script");
+    s.src = src; s.onload = res;
+    s.onerror = function(){ rej(new Error("Falha ao carregar " + src)); };
+    document.head.appendChild(s);
+  });
+}
+function b64enc(str){
+  var bytes = new TextEncoder().encode(str), bin = "";
+  bytes.forEach(function(b){ bin += String.fromCharCode(b); });
+  return btoa(bin);
+}
+function b64dec(b64){
+  var bin = atob(b64);
+  var bytes = Uint8Array.from(bin, function(c){ return c.charCodeAt(0); });
+  return new TextDecoder().decode(bytes);
+}
+function hash(s){
+  var t = s + SAL, h = 2166136261;
+  for (var i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(36);
+}
+
+/* =====================  ESTADO  ===================== */
+function padrao(){ return {nome:"", turma:"", inicio:null, missoes:{}, rascunhos:{}, respostas:{}}; }
+function carregar(){
+  try{
+    var r = localStorage.getItem(STORE_KEY);
+    if (r) return Object.assign(padrao(), JSON.parse(r));
+  }catch(e){}
+  return padrao();
+}
+var estado = carregar();
+function salvar(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(estado)); }catch(e){} }
+
+/* =====================  MISSÕES  ===================== */
+var TRILHAS = DATA.trilhas;
+var TODAS = [];
+TRILHAS.forEach(function(t){ t.itens = DATA.itens.filter(function(m){ return m.trilha === t.id; }); TODAS = TODAS.concat(t.itens); });
+var TOTAL_PTS = TODAS.reduce(function(a, m){ return a + m.pontos; }, 0);
+
+function feita(m){ return !!(estado.missoes[m.id] && estado.missoes[m.id].ok); }
+function pontosMissao(m){ return feita(m) ? m.pontos : 0; }
+function pontosTotais(){ return TODAS.reduce(function(a, m){ return a + pontosMissao(m); }, 0); }
+function qtdFeitas(){ return TODAS.filter(feita).length; }
+function totalDicas(){ return TODAS.reduce(function(a, m){ var s = estado.missoes[m.id]; return a + (s && s.dicas ? s.dicas : 0); }, 0); }
+function totalTentativas(){ return TODAS.reduce(function(a, m){ var s = estado.missoes[m.id]; return a + (s && s.tent ? s.tent : 0); }, 0); }
+function exigirInicio(out){
+  if (!estado.inicio){
+    out.replaceChildren(msg("warn", "Antes de começar, informe seu nome na aba <b>Início</b> e clique em <b>Começar</b>."));
+    return false;
+  }
+  return true;
+}
+function registrarSucesso(m, card, out){
+  var s = estado.missoes[m.id] || (estado.missoes[m.id] = {});
+  s.ok = true;
+  salvar();
+  card.classList.add("ok");
+  atualizarTudo();
+  out.prepend(msg("ok", "✔ <b>Missão concluída!</b> +" + m.pontos + " pts"));
+}
+
+/* =====================  PYODIDE  ===================== */
+var pyPromessa = null, fastapiPromessa = null, pyBase = null;
+function getPyodide(aviso){
+  if (pyPromessa) return pyPromessa;
+  pyPromessa = (async function(){
+    var ultimoErro;
+    for (var i = 0; i < PYODIDE_BASES.length; i++){
+      try{
+        aviso("Baixando o interpretador Python (só na primeira vez; pode levar de 10 a 30 segundos)…");
+        await carregarScript(PYODIDE_BASES[i] + "pyodide.js");
+        var py = await loadPyodide({indexURL: PYODIDE_BASES[i]});
+        aviso("Carregando Pydantic e SQLAlchemy…");
+        await py.loadPackage(["micropip", "pydantic", "sqlalchemy", "ssl"]);
+        await py.runPythonAsync(PY_HARNESS);
+        pyBase = PYODIDE_BASES[i];
+        return py;
+      }catch(e){ ultimoErro = e; }
+    }
+    throw ultimoErro || new Error("Pyodide indisponível");
+  })();
+  pyPromessa.catch(function(){ pyPromessa = null; });
+  return pyPromessa;
+}
+function getFastAPI(py, aviso){
+  if (fastapiPromessa) return fastapiPromessa;
+  fastapiPromessa = (async function(){
+    aviso("Instalando o FastAPI no navegador (só na primeira vez)…");
+    var urls = LIBS_LOCAIS.map(function(f){ return new URL("libs/" + f, location.href).href; });
+    py.globals.set("_urls", JSON.stringify(urls));
+    py.globals.set("_pypi", JSON.stringify(LIBS_PYPI));
+    await py.runPythonAsync("await _instalar_fastapi(_urls, _pypi)");
+    return true;
+  })();
+  fastapiPromessa.catch(function(){ fastapiPromessa = null; });
+  return fastapiPromessa;
+}
+
+/* =====================  VERIFICAÇÃO DE CÓDIGO  ===================== */
+function dicaDeErro(e){
+  if (!e) return "";
+  var m;
+  if (/^SyntaxError|^IndentationError|^TabError/.test(e)) return "Erro de escrita: confira parênteses, aspas, dois-pontos (:) e a indentação (espaços no começo das linhas).";
+  if ((m = e.match(/^NameError: name '([^']+)' is not defined/))) return "O nome <code>" + m[1] + "</code> não existe. Faltou um <code>import</code>, ou o nome foi escrito diferente de como foi criado.";
+  if ((m = e.match(/^ImportError: cannot import name '([^']+)'/))) return "Não existe <code>" + m[1] + "</code> nesse módulo. Confira o nome e a letra maiúscula/minúscula.";
+  if (/^ModuleNotFoundError/.test(e)) return "Esse módulo não está disponível aqui. Use apenas fastapi, pydantic e sqlalchemy.";
+  if (/^AttributeError/.test(e)) return "Você usou um atributo ou método que não existe nesse objeto. Confira o nome.";
+  if (/^TypeError/.test(e)) return "Tipo ou número de argumentos incompatível. Confira os parâmetros da função/classe.";
+  if (/^KeyError/.test(e)) return "Você acessou uma chave que não existe no dicionário.";
+  if (/ValidationError/.test(e)) return "O Pydantic recusou os dados. Confira os tipos e as regras que você declarou.";
+  if (/OperationalError|IntegrityError|ProgrammingError/.test(e)) return "Erro do banco de dados. Confira nomes de tabela/colunas e se a tabela foi criada (create_all).";
+  return "";
+}
+async function verificarCodigo(m, codigo, out, card){
+  if (!exigirInicio(out)) return;
+  var aviso = function(t){ out.replaceChildren(msgTxt("info", t)); };
+  aviso("Preparando o ambiente…");
+  var py;
+  try{
+    py = await getPyodide(aviso);
+    if (m.fastapi) await getFastAPI(py, aviso);
+  }catch(e){
+    out.replaceChildren(msg("err", "Não consegui preparar o ambiente. Verifique a internet e se a rede da escola libera <code>cdn.jsdelivr.net</code>. Depois recarregue a página: seu código fica salvo."), el("pre", {}, String(e && e.message || e).slice(0, 300)));
+    return;
+  }
+  aviso("Executando e verificando…");
+  py.globals.set("_cod", codigo);
+  py.globals.set("_tst", m.teste);
+  py.globals.set("_app", !!m.usaApp);
+  var r;
+  try{
+    r = JSON.parse(await py.runPythonAsync("await _rodar(_cod, _tst, _app)"));
+  }catch(e){
+    out.replaceChildren(msg("err", "Ocorreu um erro inesperado ao verificar. Recarregue a página (seu código fica salvo)."), el("pre", {}, String(e && e.message || e).slice(-400)));
+    return;
+  }
+  out.replaceChildren();
+  if (r.fase === "codigo"){
+    out.append(
+      msg("err", "<b>Seu código gerou um erro</b>" + (r.linha ? " (linha " + r.linha + ")" : "") + ":"),
+      el("pre", {}, r.erro)
+    );
+    var d = dicaDeErro(r.erro);
+    if (d) out.append(msg("info", d));
+  } else {
+    var ok = r.resultados.every(function(x){ return x[1]; });
+    out.append(el("div", {}, r.resultados.map(function(x){
+      return el("div", {"class":"check"},
+        el("span", {"class":"i"}, x[1] ? "✅" : "❌"),
+        el("div", {}, el("div", {}, x[0]), (!x[1] && x[2]) ? el("div", {"class":"det"}, x[2]) : null));
+    })));
+    if (ok) registrarSucesso(m, card, out);
+    else out.prepend(msg("err", "<b>Quase lá!</b> Leia os itens com ❌, ajuste o código e verifique de novo. As dicas estão liberadas e não tiram pontos."));
+  }
+  if (r.saida && r.saida.trim()){
+    out.append(el("details", {}, el("summary", {"class":"muted"}, "Ver o que o seu código exibiu com print()"), el("pre", {}, r.saida.slice(0, 2000))));
+  }
+}
+
+/* =====================  CARDS  ===================== */
+var CLASSE_NIVEL = {"Fácil":"facil","Médio":"medio","Desafio":"desafio"};
+function cabecalhoCard(m, card){
+  return el("summary", {},
+    el("span", {"class":"marca-ok"}, "✔"),
+    el("span", {"class":"tit"}, m.titulo),
+    el("span", {"class":"badge " + CLASSE_NIVEL[m.nivel]}, m.nivel),
+    el("span", {"class":"pts"}, m.pontos + " pts")
+  );
+}
+function criarCardCodigo(m){
+  var salvo = estado.missoes[m.id] || {};
+  var card = el("details", {"class":"card" + (salvo.ok ? " ok" : "")});
+  card.append(cabecalhoCard(m, card));
+  var corpo = el("div", {"class":"corpo"});
+  corpo.append(el("p", {html: m.enunciado}));
+
+  var caixaDicas = el("div", {});
+  function mostrarDicas(){
+    caixaDicas.replaceChildren();
+    var n = (estado.missoes[m.id] && estado.missoes[m.id].dicas) || 0;
+    for (var i = 0; i < n; i++) caixaDicas.append(el("div", {"class":"dica", html:"💡 <b>Dica " + (i + 1) + ":</b> " + m.dicas[i]}));
+  }
+  var btnDica = el("button", {"class":"btn sec", type:"button"}, "💡 Pedir dica");
+  function ajustarBotaoDica(){
+    var n = (estado.missoes[m.id] && estado.missoes[m.id].dicas) || 0;
+    if (n >= m.dicas.length) btnDica.hidden = true;
+    else btnDica.textContent = n === 0 ? "💡 Pedir dica" : "💡 Mais uma dica";
+  }
+  btnDica.addEventListener("click", function(){
+    var s = estado.missoes[m.id] || (estado.missoes[m.id] = {});
+    s.dicas = Math.min((s.dicas || 0) + 1, m.dicas.length);
+    salvar(); mostrarDicas(); ajustarBotaoDica();
+  });
+  mostrarDicas(); ajustarBotaoDica();
+
+  var ta = el("textarea", {"class":"code", spellcheck:"false", autocapitalize:"off", autocomplete:"off", autocorrect:"off", "aria-label":"Editor de código"});
+  ta.value = (estado.rascunhos[m.id] !== undefined) ? estado.rascunhos[m.id] : m.starter;
+  var timer;
+  ta.addEventListener("input", function(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){ estado.rascunhos[m.id] = ta.value; salvar(); }, 400);
+  });
+  ta.addEventListener("keydown", function(ev){
+    if (ev.key === "Tab"){
+      ev.preventDefault();
+      var a = ta.selectionStart, b = ta.selectionEnd;
+      ta.value = ta.value.slice(0, a) + "    " + ta.value.slice(b);
+      ta.selectionStart = ta.selectionEnd = a + 4;
+    } else if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)){
+      ev.preventDefault(); btnRodar.click();
+    } else if (ev.key === "Enter" && !ev.shiftKey && !ev.altKey){
+      ev.preventDefault();
+      var v = ta.value, s0 = ta.selectionStart, e0 = ta.selectionEnd;
+      var ini = v.lastIndexOf("\n", s0 - 1) + 1;
+      var linha = v.slice(ini, s0);
+      var ind = (linha.match(/^[ \t]*/) || [""])[0];
+      var extra = /:\s*$/.test(linha) ? "    " : "";
+      var ins = "\n" + ind + extra;
+      ta.value = v.slice(0, s0) + ins + v.slice(e0);
+      ta.selectionStart = ta.selectionEnd = s0 + ins.length;
+      ta.dispatchEvent(new Event("input"));
+    }
+  });
+  var out = el("div", {"class":"saida"});
+  var btnRodar = el("button", {"class":"btn", type:"button"}, "▶ Executar e verificar");
+  var btnReset = el("button", {"class":"btn sec", type:"button"}, "↺ Código inicial");
+  btnRodar.addEventListener("click", async function(){
+    btnRodar.disabled = true;
+    estado.rascunhos[m.id] = ta.value;
+    var s = estado.missoes[m.id] || (estado.missoes[m.id] = {});
+    s.tent = (s.tent || 0) + 1; salvar();
+    try{ await verificarCodigo(m, ta.value, out, card); }
+    catch(e){ out.replaceChildren(msgTxt("err", "Ocorreu um erro inesperado: " + e.message)); }
+    btnRodar.disabled = false;
+  });
+  btnReset.addEventListener("click", function(){
+    if (confirm("Voltar ao código inicial desta missão? Seu código atual será perdido.")){
+      ta.value = m.starter; estado.rascunhos[m.id] = m.starter; salvar();
+    }
+  });
+  corpo.append(el("div", {"class":"linha"}, btnDica), caixaDicas, ta, el("div", {"class":"linha"}, btnRodar, btnReset), out);
+  card.append(corpo);
+  return card;
+}
+function criarCardQuiz(m){
+  var salvo = estado.missoes[m.id] || {};
+  var card = el("details", {"class":"card" + (salvo.ok ? " ok" : "")});
+  card.append(cabecalhoCard(m, card));
+  var corpo = el("div", {"class":"corpo"});
+  corpo.append(el("p", {html: m.enunciado}));
+  var respostas = estado.respostas[m.id] || (estado.respostas[m.id] = {});
+  var blocos = [];
+  m.perguntas.forEach(function(p, qi){
+    var bloco = el("div", {"class":"perg"});
+    bloco.append(el("div", {"class":"q", html:(qi + 1) + ". " + p.q}));
+    p.ops.forEach(function(op, oi){
+      var id = m.id + "_" + qi + "_" + oi;
+      var inp = el("input", {type:"radio", name:m.id + "_" + qi, id:id});
+      if (respostas[qi] === oi) inp.checked = true;
+      inp.addEventListener("change", function(){ respostas[qi] = oi; salvar(); });
+      bloco.append(el("label", {"for":id}, inp, el("span", {html: op})));
+    });
+    bloco.append(el("div", {"class":"exp"}));
+    corpo.append(bloco); blocos.push(bloco);
+  });
+  var out = el("div", {});
+  var btn = el("button", {"class":"btn", type:"button"}, "Verificar respostas");
+  btn.addEventListener("click", function(){
+    if (!exigirInicio(out)) return;
+    var s = estado.missoes[m.id] || (estado.missoes[m.id] = {});
+    s.tent = (s.tent || 0) + 1;
+    var acertos = 0, faltam = 0;
+    m.perguntas.forEach(function(p, qi){
+      var b = blocos[qi], exp = b.querySelector(".exp");
+      b.classList.remove("certa", "errada");
+      if (respostas[qi] === undefined){ faltam++; exp.textContent = ""; return; }
+      if (respostas[qi] === p.c){ acertos++; b.classList.add("certa"); exp.innerHTML = "✅ " + p.why; }
+      else { b.classList.add("errada"); exp.innerHTML = "❌ Ainda não. Releia a pergunta e tente de novo."; }
+    });
+    salvar();
+    out.replaceChildren();
+    if (faltam) out.append(msg("warn", "Responda todas as perguntas antes de verificar (" + faltam + " sem resposta)."));
+    else if (acertos === m.perguntas.length){ registrarSucesso(m, card, out); }
+    else out.append(msg("err", "Você acertou " + acertos + " de " + m.perguntas.length + ". Revise as perguntas com ❌ e tente de novo, sem limite de tentativas."));
+  });
+  corpo.append(el("div", {"class":"linha"}, btn), out);
+  card.append(corpo);
+  return card;
+}
+
+/* =====================  PAINÉIS  ===================== */
+var progressos = {};
+function montarTrilha(t){
+  var sec = el("section", {"class":"painel", id:"painel-" + t.id, hidden:""});
+  sec.append(el("h2", {}, t.icone + " " + t.nome));
+  var prog = el("p", {"class":"prog"});
+  progressos[t.id] = prog;
+  sec.append(prog);
+  if (t.aviso) sec.append(msg("info", t.aviso));
+  t.itens.forEach(function(m){ sec.append(m.perguntas ? criarCardQuiz(m) : criarCardCodigo(m)); });
+  return sec;
+}
+function montarInicio(){
+  var sec = el("section", {"class":"painel", id:"painel-inicio"});
+  var resumo = TRILHAS.map(function(t){
+    var pts = t.itens.reduce(function(a, m){ return a + m.pontos; }, 0);
+    return el("div", {"class":"box"}, el("h3", {}, t.icone + " " + t.nome), el("div", {"class":"muted"}, t.itens.length + " missões · " + pts + " pts"));
+  });
+  var inpNome = el("input", {type:"text", id:"inpNome", placeholder:"Seu nome completo", maxlength:"60"});
+  var inpTurma = el("input", {type:"text", id:"inpTurma", placeholder:"Ex.: DS-2026", maxlength:"30"});
+  inpNome.value = estado.nome; inpTurma.value = estado.turma;
+  var aviso = el("div", {});
+  var btn = el("button", {"class":"btn", type:"button"}, estado.inicio ? "Atualizar dados" : "▶ Começar");
+  btn.addEventListener("click", function(){
+    var nome = inpNome.value.trim();
+    if (nome.length < 3){ aviso.replaceChildren(msg("warn", "Informe seu nome completo.")); return; }
+    estado.nome = nome; estado.turma = inpTurma.value.trim();
+    var primeira = !estado.inicio;
+    if (primeira) estado.inicio = Date.now();
+    salvar(); atualizarTudo();
+    btn.textContent = "Atualizar dados";
+    aviso.replaceChildren(msg("ok", primeira ? "Tudo certo! Escolha uma trilha nas abas acima e vá no seu ritmo. 🚀" : "Dados atualizados."));
+  });
+  sec.append(
+    el("h2", {}, "Bem-vindo(a) ao " + CONFIG.titulo + "! 🧪"),
+    el("p", {}, "Aqui você pratica, no seu ritmo, o que estudamos sobre APIs com Python. Cada missão tem um enunciado, um editor de código e uma verificação automática que mostra exatamente o que passou e o que ainda precisa de ajuste. Tudo roda no navegador, sem instalar nada."),
+    el("div", {"class":"box"},
+      el("h3", {}, "Como funciona"),
+      el("ol", {"class":"passos", html:
+        "<li>Informe seu <b>nome</b> e clique em <b>Começar</b> (logo abaixo).</li>" +
+        "<li>Escolha uma trilha nas abas. Pode seguir a ordem ou pular: você decide.</li>" +
+        "<li>Em cada missão, escreva o código e clique em <b>Executar e verificar</b>. Os itens com ❌ mostram o que ajustar.</li>" +
+        "<li>Precisou de ajuda? Use as <b>dicas</b>: elas são livres e <b>não tiram pontos</b>.</li>" +
+        "<li>No final (ou quando o professor pedir), abra a aba <b>Comprovante</b>, gere o código e entregue no Classroom.</li>"
+      })
+    ),
+    el("div", {"class":"box"},
+      el("h3", {}, "Sem pressão"),
+      el("p", {html:"Esta atividade é <b>individual e não é uma competição</b>. Não existe ranking, e ninguém vê o seu resultado além do professor. Errar faz parte: o importante é entender por que o teste falhou. Seu progresso fica salvo neste navegador, então use sempre o mesmo computador."})
+    ),
+    el("div", {"class":"grid"}, resumo),
+    el("div", {"class":"box"},
+      el("h3", {}, "Seus dados"),
+      el("label", {"for":"inpNome"}, "Nome completo"), inpNome,
+      el("label", {"for":"inpTurma"}, "Turma"), inpTurma,
+      el("div", {"class":"linha"}, btn), aviso
+    )
+  );
+  return sec;
+}
+function gerarCodigo(){
+  var ids = Object.keys(estado.missoes);
+  var payload = {
+    v: CONFIG.versao, n: estado.nome, t: estado.turma,
+    m: ids.filter(function(i){ return estado.missoes[i].ok; }),
+    d: totalDicas(), a: totalTentativas(), p: pontosTotais()
+  };
+  var json = JSON.stringify(payload);
+  return b64enc(json) + "." + hash(json);
+}
+function montarComprovante(){
+  var sec = el("section", {"class":"painel", id:"painel-comprovante", hidden:""});
+  var conteudo = el("div", {});
+  sec.append(el("h2", {}, "🏁 Comprovante"), conteudo);
+  sec.render = function(){
+    var saida = el("textarea", {"class":"out", readonly:"", "aria-label":"Código do comprovante"});
+    var aviso = el("div", {});
+    var btnGerar = el("button", {"class":"btn", type:"button"}, "Gerar comprovante");
+    btnGerar.addEventListener("click", function(){
+      if (!estado.nome){ aviso.replaceChildren(msg("warn", "Informe seu nome na aba Início primeiro.")); return; }
+      saida.value = gerarCodigo();
+      aviso.replaceChildren(msg("ok", "Comprovante gerado. Copie o código e entregue no Classroom."));
+    });
+    var btnCopiar = el("button", {"class":"btn sec", type:"button"}, "Copiar código");
+    btnCopiar.addEventListener("click", function(){
+      if (!saida.value){ aviso.replaceChildren(msg("warn", "Gere o comprovante primeiro.")); return; }
+      saida.select();
+      var ok = false;
+      try{ ok = document.execCommand("copy"); }catch(e){}
+      aviso.replaceChildren(msg(ok ? "ok" : "info", ok ? "Código copiado!" : "Selecione o texto e copie manualmente (Ctrl+C)."));
+    });
+    var btnZerar = el("button", {"class":"btn perigo", type:"button"}, "Apagar tudo e recomeçar");
+    btnZerar.addEventListener("click", function(){
+      if (confirm("Isso apaga o seu progresso e todos os códigos salvos neste navegador. Continuar?")){
+        try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+        location.reload();
+      }
+    });
+    conteudo.replaceChildren(
+      el("div", {"class":"box"},
+        el("h3", {}, estado.nome || "Aluno não registrado"),
+        el("p", {"class":"muted"}, estado.turma || ""),
+        el("div", {html:
+          "<b>Pontos:</b> " + pontosTotais() + " / " + TOTAL_PTS + "<br>" +
+          "<b>Missões concluídas:</b> " + qtdFeitas() + " / " + TODAS.length
+        })
+      ),
+      el("div", {"class":"box"},
+        el("h3", {}, "Código para o professor"),
+        saida, el("div", {"class":"linha"}, btnGerar, btnCopiar), aviso
+      ),
+      el("div", {"class":"linha"}, btnZerar)
+    );
+  };
+  return sec;
+}
+function csvCampo(v){ v = String(v == null ? "" : v); return /[",;\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function montarProfessor(){
+  var sec = el("section", {"class":"painel", id:"painel-professor", hidden:""});
+  var ta = el("textarea", {"class":"out", placeholder:"Cole aqui os códigos dos alunos, um por linha", style:"min-height:140px"});
+  var inpMeta = el("input", {type:"number", min:"1", value:String(CONFIG.metaProfessor), id:"inpMeta"});
+  var res = el("div", {});
+  var btn = el("button", {"class":"btn", type:"button"}, "Gerar relatório");
+  btn.addEventListener("click", function(){
+    var meta = Math.max(1, parseInt(inpMeta.value, 10) || CONFIG.metaProfessor);
+    var linhas = ta.value.split("\n").map(function(l){ return l.trim(); }).filter(Boolean);
+    var mapa = {}, invalidos = 0;
+    linhas.forEach(function(l){
+      try{
+        var i = l.lastIndexOf("."), b64 = l.slice(0, i), h = l.slice(i + 1);
+        var json = b64dec(b64);
+        if (hash(json) !== h){ invalidos++; return; }
+        var d = JSON.parse(json), pts = 0, n = 0;
+        (d.m || []).forEach(function(id){
+          var m = TODAS.filter(function(x){ return x.id === id; })[0];
+          if (m){ pts += m.pontos; n++; }
+        });
+        var chave = (d.n || "").toLowerCase() + "|" + (d.t || "").toLowerCase();
+        var item = {n:d.n, t:d.t, q:n, pts:pts, d:d.d || 0, a:d.a || 0};
+        if (!mapa[chave] || mapa[chave].pts < pts) mapa[chave] = item;
+      }catch(e){ invalidos++; }
+    });
+    var alunos = Object.keys(mapa).map(function(k){ return mapa[k]; });
+    alunos.sort(function(x, y){ return x.n.localeCompare(y.n, "pt-BR"); });
+    res.replaceChildren();
+    if (invalidos) res.append(msg("warn", invalidos + " código(s) inválido(s) ou alterado(s) foram ignorados."));
+    if (!alunos.length){ res.append(msg("info", "Nenhum código válido ainda.")); return; }
+    var media = Math.round(alunos.reduce(function(a, q){ return a + Math.min(100, q.pts / meta * 100); }, 0) / alunos.length);
+    res.append(msg("info", alunos.length + " aluno(s) · nota média " + media + " · lista em ordem alfabética, sem ranking."));
+    var rows = alunos.map(function(q){
+      var nota = Math.round(Math.min(100, q.pts / meta * 100));
+      q.nota = nota; return q;
+    });
+    res.append(el("div", {"class":"tw"}, el("table", {"class":"t"},
+      el("thead", {}, el("tr", {}, ["Aluno","Turma","Missões","Pontos","Nota","Dicas","Tentativas"].map(function(c){ return el("th", {}, c); }))),
+      el("tbody", {}, rows.map(function(q){
+        return el("tr", {}, el("td", {}, q.n), el("td", {}, q.t || ""), el("td", {}, q.q + "/" + TODAS.length), el("td", {}, String(q.pts)), el("td", {}, String(q.nota)), el("td", {}, String(q.d)), el("td", {}, String(q.a)));
+      }))
+    )));
+    var csv = "Aluno;Turma;Missões;Pontos;Nota;Dicas;Tentativas\n" + rows.map(function(q){
+      return [q.n, q.t, q.q, q.pts, q.nota, q.d, q.a].map(csvCampo).join(";");
+    }).join("\n");
+    var saida = el("textarea", {"class":"out", readonly:"", style:"min-height:90px"});
+    saida.value = csv;
+    var btnCopia = el("button", {"class":"btn sec", type:"button"}, "Copiar tabela (CSV)");
+    btnCopia.addEventListener("click", function(){ saida.select(); try{ document.execCommand("copy"); }catch(e){} });
+    res.append(el("div", {"class":"linha"}, btnCopia), saida);
+  });
+  sec.append(el("h2", {}, "👩‍🏫 Painel do professor"),
+    msg("info", "Cada aluno gera um código na aba Comprovante. Cole todos aqui. Os pontos são recalculados a partir das missões concluídas. A nota é pontos ÷ meta × 100, limitada a 100. A lista fica em ordem alfabética: não há ranking."),
+    el("label", {"for":"inpMeta"}, "Pontos que equivalem à nota 100 (total possível: " + TOTAL_PTS + ")"), inpMeta,
+    el("label", {}, "Códigos dos alunos"), ta, el("div", {"class":"linha"}, btn), res);
+  return sec;
+}
+
+/* =====================  ABAS / TOPO  ===================== */
+var ABAS = [{id:"inicio", nome:"Início"}].concat(TRILHAS.map(function(t){ return {id:t.id, nome:t.icone + " " + t.nome}; }), [{id:"comprovante", nome:"🏁 Comprovante"}]);
+var professor = location.hash === "#professor";
+if (professor) ABAS.push({id:"professor", nome:"👩‍🏫 Professor"});
+window.addEventListener("hashchange", function(){ location.reload(); });
+
+var painel = {};
+var $abas = document.getElementById("abas");
+var $conteudo = document.getElementById("conteudo");
+function mudarAba(id){
+  ABAS.forEach(function(a){ painel[a.id].hidden = (a.id !== id); });
+  Array.prototype.forEach.call($abas.children, function(b){ b.classList.toggle("ativa", b.dataset.id === id); });
+  if (id === "comprovante") painel.comprovante.render();
+  window.scrollTo(0, 0);
+}
+function atualizarTudo(){
+  document.getElementById("chipAluno").textContent = "Aluno: " + (estado.nome ? estado.nome.split(" ")[0] : "—");
+  document.getElementById("chipMissoes").textContent = qtdFeitas() + " de " + TODAS.length + " missões";
+  document.getElementById("chipPontos").textContent = pontosTotais() + " pts";
+  TRILHAS.forEach(function(t){
+    var f = t.itens.filter(feita).length;
+    var pts = t.itens.reduce(function(a, m){ return a + pontosMissao(m); }, 0);
+    progressos[t.id].textContent = f + " de " + t.itens.length + " missões concluídas · " + pts + " pts";
+  });
+}
+
+document.getElementById("titulo").textContent = CONFIG.titulo;
+document.getElementById("subtitulo").textContent = CONFIG.subtitulo;
+document.title = CONFIG.titulo;
+painel.inicio = montarInicio();
+TRILHAS.forEach(function(t){ painel[t.id] = montarTrilha(t); });
+painel.comprovante = montarComprovante();
+if (professor) painel.professor = montarProfessor();
+ABAS.forEach(function(a){
+  var b = el("button", {type:"button", "data-id":a.id}, a.nome);
+  b.addEventListener("click", function(){ mudarAba(a.id); });
+  $abas.append(b);
+  $conteudo.append(painel[a.id]);
+});
+atualizarTudo();
+mudarAba("inicio");
+window.__lab = {estado: function(){ return estado; }};
+})();
+</script>
+</body>
+</html>
